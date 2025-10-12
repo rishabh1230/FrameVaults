@@ -25,8 +25,8 @@ const Header: React.FC = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-12">
-            <Link 
-              to="/films" 
+            <Link
+              to="/films"
               className={`relative text-sm font-bold uppercase tracking-[0.2em] hover:text-cinema-accent transition-colors ${
                 isActive('/films') ? 'text-cinema-accent' : ''
               }`}
@@ -36,8 +36,8 @@ const Header: React.FC = () => {
                 <div className="absolute -bottom-2 left-0 w-full h-0.5 bg-cinema-accent"></div>
               )}
             </Link>
-            <Link 
-              to="/about" 
+            <Link
+              to="/about"
               className={`relative text-sm font-bold uppercase tracking-[0.2em] hover:text-cinema-accent transition-colors ${
                 isActive('/about') ? 'text-cinema-accent' : ''
               }`}
@@ -47,18 +47,45 @@ const Header: React.FC = () => {
                 <div className="absolute -bottom-2 left-0 w-full h-0.5 bg-cinema-accent"></div>
               )}
             </Link>
-            <button 
+
+            {/* Added Login and Signup Links */}
+            <Link
+              to="/login"
+              className={`relative text-sm font-bold uppercase tracking-[0.2em] hover:text-cinema-accent transition-colors ${
+                isActive('/login') ? 'text-cinema-accent' : ''
+              }`}
+            >
+              Login
+              {isActive('/login') && (
+                <div className="absolute -bottom-2 left-0 w-full h-0.5 bg-cinema-accent"></div>
+              )}
+            </Link>
+            <Link
+              to="/register"
+              className={`relative text-sm font-bold uppercase tracking-[0.2em] hover:text-cinema-accent transition-colors ${
+                isActive('/register') ? 'text-cinema-accent' : ''
+              }`}
+            >
+              Sign Up
+              {isActive('/register') && (
+                <div className="absolute -bottom-2 left-0 w-full h-0.5 bg-cinema-accent"></div>
+              )}
+            </Link>
+
+            <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className="p-2 hover:text-cinema-accent transition-colors hover:bg-cinema-card rounded"
+              aria-label="Toggle search"
             >
               <Search size={20} />
             </button>
           </nav>
 
           {/* Mobile Menu Button */}
-          <button 
+          <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="md:hidden p-2 hover:bg-cinema-card rounded transition-colors"
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -72,6 +99,7 @@ const Header: React.FC = () => {
                 type="text"
                 placeholder="Search films, directors, genres..."
                 className="w-full bg-cinema-card text-cinema-text-primary px-6 py-4 text-lg font-medium rounded-none border-2 border-cinema-text-secondary focus:outline-none focus:border-cinema-accent transition-colors"
+                aria-label="Search films, directors, genres"
               />
               <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-cinema-text-secondary" size={20} />
             </div>
@@ -82,21 +110,36 @@ const Header: React.FC = () => {
         {isMenuOpen && (
           <nav className="md:hidden pb-6 border-t border-cinema-card">
             <div className="flex flex-col space-y-6 pt-6">
-              <Link 
-                to="/films" 
+              <Link
+                to="/films"
                 className="text-lg font-bold uppercase tracking-[0.2em] hover:text-cinema-accent transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Films
               </Link>
-              <Link 
-                to="/about" 
+              <Link
+                to="/about"
                 className="text-lg font-bold uppercase tracking-[0.2em] hover:text-cinema-accent transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 About
               </Link>
-              <button 
+              {/* Added Login and Signup Links to Mobile Menu */}
+              <Link
+                to="/login"
+                className="text-lg font-bold uppercase tracking-[0.2em] hover:text-cinema-accent transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="text-lg font-bold uppercase tracking-[0.2em] hover:text-cinema-accent transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Sign Up
+              </Link>
+              <button
                 onClick={() => {
                   setIsSearchOpen(!isSearchOpen);
                   setIsMenuOpen(false);
