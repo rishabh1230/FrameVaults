@@ -1,29 +1,59 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import session from "express-session";
 import passport from "passport";
+import dotenv from "dotenv";
 import "./middlewares/GoogleAuth.middleware.js"; // Ensure Google strategy is configured
 import userRoutes from "./routes/user.routes.js";
 
+dotenv.config(); // Load .env variables at start
+
 const app = express();
 
-// Middleware
-app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true,
-  })
-);
+const allowedOrigins = ['http://localhost:5173'];
 
+// Verify secret loaded (optional, remove in production)
+console.log('Session secret loaded:', process.env.SESSION_SECRET);
+
+// CORS middleware - must come first to handle pre-flight requests
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true
+}));
+
+// Body parsers and static files
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
-// Passport middleware must be initialized before mounting routes
-app.use(passport.initialize());
+// Session setup - must be before passport
+app.set('trust proxy', 1); // needed if behind proxy like Heroku or Render
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  proxy: true,
+  cookie: {
+    secure: true,       // false if running on HTTP locally
+    sameSite: 'none',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000
+  }
+}));
 
-// Mount user routes under /api/users
+// Passport initialization after session
+app.use(passport.initialize());
+app.use(passport.session());
+
+// API routes
 app.use("/api/users", userRoutes);
 
 // 404 handler for unmatched routes
@@ -37,7 +67,7 @@ app.use((req, res, next) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error(err); // optional: logs error in console
+  console.error(err);
   const status = err.status || 500;
   res.status(status).json({
     error: err.name || "InternalServerError",

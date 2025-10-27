@@ -1,120 +1,105 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import api from "../api/axios";
+import { useAuth } from "../context/AuthContext";
+import { FcGoogle } from "react-icons/fc"; // Google icon import
 
-const API_BASE_URL = "http://localhost:8000/api/users"; // adjust your backend URL
-
-const LoginPage = () => {
+const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage("");
+
     try {
-      const res = await axios.post(
-        `${API_BASE_URL}/login`,
-        { email, password },
-        { withCredentials: true } // send cookies if your backend uses them
-      );
-      setMessage("");
-      // Store token, redirect or load home
-      localStorage.setItem("accessToken", res.data.accessToken);
-      navigate("/"); // Redirect to home or desired page
-    } catch (error) {
-      setMessage(
-        error.response?.data?.message || error.message || "Login failed"
-      );
+      const response = await api.post("/users/login", { email, password });
+      const { accessToken, user } = response.data.data;
+
+      login(user, accessToken);
+      setMessage("Login successful!");
+      setTimeout(() => navigate("/"), 800);
+    } catch (error: any) {
+      setMessage(error.response?.data?.message || "Login failed. Please try again.");
     }
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${API_BASE_URL}/google`;
+    window.location.href = "http://localhost:8000/api/users/google";
   };
 
   return (
     <div className="bg-black min-h-screen flex flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="text-center text-4xl font-extrabold text-white">
-          Sign In
-        </h2>
+        <h2 className="text-center text-4xl font-extrabold text-white">Sign In</h2>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-[#141414] py-8 px-6 shadow rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleLogin}>
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-white"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-white">
                 Email address
               </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-[#e50914] focus:border-[#e50914] sm:text-sm bg-[#333] text-white"
-                />
-              </div>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-700 rounded-md bg-[#333] text-white placeholder-gray-500 focus:outline-none focus:ring-[#e50914] focus:border-[#e50914]"
+              />
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-white"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-white">
                 Password
               </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-[#e50914] focus:border-[#e50914] sm:text-sm bg-[#333] text-white"
-                />
-              </div>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-700 rounded-md bg-[#333] text-white placeholder-gray-500 focus:outline-none focus:ring-[#e50914] focus:border-[#e50914]"
+              />
             </div>
 
-            <div>
-              <button
-                type="submit"
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-white bg-[#e50914] hover:bg-[#f6121d] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#f6121d] text-sm font-semibold"
-              >
-                Sign In
-              </button>
-            </div>
+            <button
+              type="submit"
+              className="w-full flex justify-center py-3 px-4 rounded-md text-white bg-[#e50914] hover:bg-[#f6121d] font-semibold"
+            >
+              Sign In
+            </button>
           </form>
 
-          <div className="mt-6">
-            <button
-              onClick={handleGoogleLogin}
-              className="w-full flex justify-center py-3 px-4 rounded-md border border-white text-white hover:bg-white hover:text-[#e50914] transition text-sm font-semibold"
-            >
-              Sign in with Google
-            </button>
-          </div>
+          {/* Google Sign-In Button */}
+          <button
+            onClick={handleGoogleLogin}
+            className="mt-6 w-full flex items-center justify-center gap-3 py-3 px-4 rounded-md border border-white text-white hover:bg-white hover:text-[#e50914] transition font-semibold"
+          >
+            <FcGoogle className="text-2xl bg-white rounded-full" />
+            <span>Sign in with Google</span>
+          </button>
 
           {message && (
-            <p className="text-sm text-red-600 mt-4 whitespace-pre-wrap">{message}</p>
+            <p
+              className={`text-sm mt-4 whitespace-pre-wrap ${
+                message.includes("successful") ? "text-green-500" : "text-red-600"
+              }`}
+            >
+              {message}
+            </p>
           )}
 
           <p className="mt-8 text-center text-gray-400 text-sm">
-            Don't have an account?{" "}
-            <Link
-              to="/register"
-              className="text-white hover:underline font-semibold"
-            >
+            Don’t have an account?{" "}
+            <Link to="/register" className="text-[#e50914] hover:text-[#f6121d] font-semibold">
               Sign up now
             </Link>
           </p>
@@ -125,3 +110,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+

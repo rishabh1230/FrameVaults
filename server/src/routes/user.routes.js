@@ -1,6 +1,8 @@
+// Existing imports and setup
 import express from "express";
-import multer from "multer"; // for handling file uploads
-import passport from "passport";
+import multer from "multer";
+import passport from "../middlewares/GoogleAuth.middleware.js";
+import { User } from "../models/user.model.js";
 import {
   registerUser,
   loginUser,
@@ -10,11 +12,9 @@ import {
 import { verifyJWT } from "../middlewares/Auth.middleware.js";
 
 const router = express.Router();
+const upload = multer({ dest: "uploads/" });
 
-// Configure multer for file uploads (profile pictures)
-const upload = multer({ dest: "uploads/" }); // adjust storage as needed
-
-// Public routes
+// Existing user routes...
 router.post("/register", upload.single("profilePicture"), registerUser);
 router.post("/login", loginUser);
 router.post("/logout", verifyJWT, logoutUser);
@@ -28,33 +28,55 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", { session: false, failureRedirect: "/login" }),
-  (req, res) => {
-    // Successful authentication, generate tokens and respond
-    const user = req.user;
+  async (req, res) => {
+    try {
+      const user = req.user;
 
-    const accessToken = user.generateAccessToken();
-    const refreshToken = user.generateRefreshToken();
+      const accessToken = user.generateAccessToken();
+      const refreshToken = user.generateRefreshToken();
 
-    user.refreshToken = refreshToken;
-    user.save();
+      user.refreshToken = refreshToken;
+      await user.save();
 
-    // Send tokens and user info in response or redirect as needed
-    res.json({
-      accessToken,
-      refreshToken,
-      user: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        profilePicture: user.profilePicture,
-        role: user.role,
-      },
-    });
+      res.redirect(
+        `http://localhost:5173/login/success?accessToken=${accessToken}&refreshToken=${refreshToken}`
+      );
+    } catch (err) {
+      console.error("Google OAuth Error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
   }
 );
 
-// Protected routes
+// *** New route to get authenticated user info ***
+router.get("/google/user", verifyJWT, async (req, res) => {
+  try {
+    const user = req.user;
+
+    const accessToken = user.generateAccessToken();
+
+    res.status(200).json({
+      status: 200,
+      data: {
+        accessToken,
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          profilePicture: user.profilePicture,
+          role: user.role,
+        },
+      },
+      message: "User info retrieved successfully",
+    });
+  } catch (err) {
+    console.error("Error fetching Google OAuth user info:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Protected user update route
 router.put("/update/:id", verifyJWT, upload.single("profilePicture"), updateUser);
 
 export default router;
-

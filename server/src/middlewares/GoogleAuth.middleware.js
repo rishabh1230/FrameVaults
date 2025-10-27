@@ -4,7 +4,6 @@ dotenv.config();
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { User } from "../models/user.model.js";
-import jwt from "jsonwebtoken";
 
 passport.use(
   new GoogleStrategy(
@@ -25,12 +24,12 @@ passport.use(
             username: profile.displayName.toLowerCase().replace(/\s/g, ""),
             email,
             profilePicture: profile.photos?.[0]?.value || null,
-            password: jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET),
+            password: "GOOGLE_OAUTH_TEMP_PASSWORD", // temp password
           });
           await user.save();
         }
 
-        done(null, user);
+        done(null, user); // must be a Mongoose document
       } catch (err) {
         done(err, null);
       }

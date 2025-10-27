@@ -6,12 +6,12 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 export const registerUser = asyncHandler(async (req, res) => {
-  const { username, email, phoneNumber, password, role } = req.body;
+  const { username, email, phoneNumber, password } = req.body;
 
   const existingUser = await User.findOne({
-    $or: [{ email }, { phoneNumber }, { username }]
+    $or: [{ email }, { phoneNumber },]
   });
-  if (existingUser) throw new ApiError(400, "Username, Email or Phone number already exists");
+  if (existingUser) throw new ApiError(400, "Email or Phone number already exists");
 
   let profilePictureUrl = null;
   if (req.file) {
@@ -24,8 +24,6 @@ export const registerUser = asyncHandler(async (req, res) => {
     email,
     phoneNumber,
     password,
-    profilePicture: profilePictureUrl,
-    role: role || "user",
   });
 
   await newUser.save();
